@@ -3,7 +3,7 @@ from torch.utils.data import TensorDataset
 import numpy as np
 import pandas as pd
 
-from extratorch.FFNN_model import fit_FFNN
+from extratorch.train import fit_module
 from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
@@ -19,10 +19,10 @@ from examples.task1_model_params import (
 )
 
 ########
-PATH_FIGURES = "../figures/task1"
-PATH_TRAINING_DATA = "example_data/Task1/TrainingData.txt"
-PATH_TESTING_POINTS = "example_data/Task1/TestingData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task1.txt"
+PATH_FIGURES = "figures/task1"
+PATH_TRAINING_DATA = "../example_data/Task1/TrainingData.txt"
+PATH_TESTING_POINTS = "../example_data/Task1/TestingData.txt"
+PATH_SUBMISSION = "sol_Task1.txt"
 ########
 
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     cv_results = k_fold_cv_grid(
         model_params=model_params_iter,
-        fit=fit_FFNN,
+        fit=fit_module,
         training_params=training_params_iter,
         data=data,
         val_data=val_data,

@@ -1,7 +1,8 @@
-import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from extratorch.FFNN_model import fit_FFNN, init_xavier, FFNN
+from extratorch.models import init_xavier, FFNN
+from extratorch.train import fit_module
 
 
 class MultilevelFFNN(FFNN):
@@ -77,8 +78,7 @@ def fit_multilevel_FFNN(
     # We get each level of the multilevel FNN
     # and train it on each level of the multilevel dataset
     levels = len(model)
-    loss_history_train_levels = np.zeros((levels, num_epochs))
-    loss_history_val_levels = np.zeros((levels, num_epochs))
+    histories = pd.DataFrame()
 
     for level in range(levels):
         level_data = TensorDataset(*get_level_dataset(*data[:], level))
@@ -87,11 +87,7 @@ def fit_multilevel_FFNN(
         else:
             level_data_val = None
 
-        (
-            level_model,
-            loss_history_train_levels[level],
-            loss_history_val_levels[level],
-        ) = fit_FFNN(
+        level_model, history = fit_module(
             model=model[level],
             data=level_data,
             data_val=level_data_val,
@@ -99,13 +95,10 @@ def fit_multilevel_FFNN(
             track_epoch=True,
             **training_param,
         )
+        for col in history:
+            histories[col + f" level={level}"] = history[col]
 
-    loss_history_train_levels = torch.as_tensor(loss_history_train_levels)
-    loss_history_val_levels = torch.as_tensor(loss_history_val_levels)
-    # return the sum of the losses since it is not relative loss
-    loss_history_train = torch.sum(loss_history_train_levels, dim=0)
-    loss_history_val = torch.sum(loss_history_val_levels, dim=0)
-    return model, loss_history_train, loss_history_val
+    return model, histories
 
 
 # only used when initialized before training

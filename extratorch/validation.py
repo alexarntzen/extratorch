@@ -1,11 +1,12 @@
 import torch
 import torch.utils
 from torch.utils.data import Subset, DataLoader, Dataset
-
+import pandas as pd
 import itertools
 from sklearn.model_selection import KFold
-
-from extratorch.FFNN_model import get_scaled_model, fit_FFNN
+from collections.abc import Callable
+from extratorch.train import fit_module
+from extratorch.models import get_scaled_model
 
 
 # Root Relative Squared Error
@@ -44,7 +45,7 @@ def k_fold_cv_grid(
     data: Dataset,
     shuffle_folds: bool = True,
     val_data: Dataset = None,
-    fit: callable = fit_FFNN,
+    fit: Callable[..., (torch.nn.Module, pd.DataFrame)] = fit_module,
     folds=5,
     trials=1,
     partial=False,
@@ -64,10 +65,11 @@ def k_fold_cv_grid(
         training_params_iter = training_params
 
     models = []
-    loss_history_trains = []
-    loss_history_vals = []
+    histories = []
     rel_train_errors = []
     rel_val_errors = []
+    model_params_dfs = []
+    training_params_dfs = []
     for model_num, (trial, (model_param, training_param)) in enumerate(
         itertools.product(
             range(trials), itertools.product(model_params_iter, training_params_iter)
@@ -83,8 +85,7 @@ def k_fold_cv_grid(
         rel_train_errors_k = []
         rel_val_errors_k = []
         models_instance_k = []
-        loss_history_trains_k = []
-        loss_history_vals_k = []
+        histories_k = []
         for k_num, (train_index, val_index) in enumerate(splits):
             if verbose:
                 print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
@@ -100,7 +101,7 @@ def k_fold_cv_grid(
             # train model on data!
             model_param_k = model_param.copy()
             model_instance = model_param_k.pop("model")(**model_param_k)
-            model_instance, loss_history_train, loss_history_val = fit(
+            model_instance, history = fit(
                 model=model_instance,
                 **training_param,
                 data=data_train_k,
@@ -108,9 +109,20 @@ def k_fold_cv_grid(
                 verbose=verbose,
             )
 
+            index = model_num * trial * k_num + trial * k_num + k_num
+            model_params_df = pd.DataFrame(
+                model_param | dict(model_num=model_num, trial=trial, fold=k_num),
+                index=[index],
+            )
+            training_params_df = pd.DataFrame(
+                training_param | dict(model_num=model_num, trial=trial, fold=k_num),
+                index=[index],
+            )
+            model_params_dfs.append(model_params_df)
+            training_params_dfs.append(training_params_df)
+
             models_instance_k.append(model_instance)
-            loss_history_trains_k.append(loss_history_train)
-            loss_history_vals_k.append(loss_history_val)
+            histories_k.append(history)
             if callable(get_error):
                 rel_train_errors_k.append(get_error(model_instance, data_train_k))
                 rel_val_errors_k.append(get_error(model_instance, data_val_k))
@@ -118,16 +130,16 @@ def k_fold_cv_grid(
                 break
 
         models.append(models_instance_k)
-        loss_history_trains.append(loss_history_trains_k)
-        loss_history_vals.append(loss_history_vals_k)
+        histories.append(histories_k)
         if len(rel_train_errors_k) > 0:
             rel_train_errors.append(rel_train_errors_k)
             rel_val_errors.append(rel_val_errors_k)
 
     k_fold_grid = {
         "models": models,
-        "loss_history_trains": loss_history_trains,
-        "loss_history_vals": loss_history_vals,
+        "model_params": pd.concat(model_params_dfs),
+        "training_params": pd.concat(training_params_dfs),
+        "histories": histories,
         "rel_train_errors": rel_train_errors,
         "rel_val_errors": rel_val_errors,
     }
@@ -145,10 +157,10 @@ def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:
         yield dict(zip(dictionary.keys(), sublist))
 
 
-def add_dictionary_iterators(new_dict_iter: iter, dict_iterator: iter, product=True):
+def add_dictionary_iterators(*dict_iterators: iter, product=True):
     """Combine two subdictionary iterators"""
     combine = itertools.product if product else zip
-    for left, right in combine(new_dict_iter, dict_iterator):
+    for left, right in combine(*dict_iterators):
         yield right | left
 
 

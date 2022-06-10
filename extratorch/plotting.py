@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.figure import Figure
 import numpy as np
 import torch
 import warnings
 from extratorch.validation import print_model_errors
+from os.path import join
+from typing import List, Union
 
 
 def get_disc_str(model):
@@ -16,44 +19,44 @@ def get_disc_str(model):
 
 
 def plot_model_history(
-    models,
-    loss_history_trains,
-    loss_history_vals=None,
+    histories: Union[List[pd.DataFrame], pd.DataFrame],
     plot_name="Loss history",
     path_figures="figures",
 ):
 
-    if len(loss_history_trains) == 0:
+    if not isinstance(histories, List):
+        return plot_model_history(
+            [histories], plot_name=plot_name, path_figures=path_figures
+        )
+
+    if len(histories) == 0:
         warnings.warn("No loss history to plot")
         return
 
-    k = len(models)
+    k = len(histories)
     histfig, axis = plt.subplots(1, k, tight_layout=True)
+
     if k == 1:
         axis = [axis]
-    for i, model in enumerate(models):
-        if np.any(loss_history_trains[i] < 0) or (
-            loss_history_vals is not None and np.any(loss_history_vals[i] < 0)
-        ):
-            plot_func = axis[i].semilogx
-        else:
-            plot_func = axis[i].loglog
+    for i, history in enumerate(histories):
+        x_values = history.index
+        for col in history:
+            y_values = history[col].values
+            if not len(y_values) > 0:
+                continue
+            if np.any(y_values < 0) or (
+                y_values is not None and np.any(y_values[i] < 0)
+            ):
+                plot_func = axis[i].semilogx
+            else:
+                plot_func = axis[i].loglog
 
-        plot_func(
-            torch.arange(1, len(loss_history_trains[i]) + 1),
-            loss_history_trains[i],
-            label="Training error history",
-        )
-        if loss_history_vals is not None and len(loss_history_vals[i]) > 0:
-            plot_func(
-                torch.arange(1, len(loss_history_vals[i]) + 1),
-                loss_history_vals[i],
-                label="Validation error history",
-            )
-        axis[i].set_xlabel("Iterations")
-        axis[i].set_ylabel("Loss")
+            plot_func(x_values, y_values, label=col)
+
+        axis[i].set_xlabel(history.index.name)
         axis[i].legend()
-    histfig.savefig(f"{path_figures}/history_{plot_name}.pdf")
+
+    histfig.savefig(join(path_figures, f"history_{plot_name}.pdf"))
     plt.close(histfig)
 
 
@@ -82,7 +85,7 @@ def plot_result_sorted(
     if x_pred is not None and y_pred is not None:
         ax.plot(x_pred, y_pred, "-", label="Prediction", lw=2)
     ax.legend()
-    fig.savefig(f"{path_figures}/{plot_name}.pdf")
+    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
     plt.close(fig)
     return fig
 
@@ -117,7 +120,7 @@ def plot_model_scatter(
             lw=1,
         )
     ax.legend()
-    fig.savefig(f"{path_figures}/{plot_name}.pdf")
+    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
     plt.close(fig)
 
 
@@ -137,7 +140,7 @@ def plot_compare_scatter(
             lw=1,
         )
     ax.legend()
-    fig.savefig(f"{path_figures}/{plot_name}.pdf")
+    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
     plt.close(fig)
 
 
@@ -149,27 +152,30 @@ def plot_model_1d(model, x_test, **kwargs):
 
 def plot_result(
     models,
-    loss_history_trains,
-    loss_history_vals,
+    histories: pd.DataFrame,
     path_figures="",
     plot_name="plot",
     rel_val_errors=None,
     plot_function=None,
     function_kwargs=None,
     model_list=None,
-    history=True,
+    history: List[List[pd.DataFrame]] = True,
+    model_params: pd.DataFrame = None,
+    training_params: pd.DataFrame = None,
     **kwargs,
 ):
     if model_list is None:
         model_list = np.arange(len(models))
     if rel_val_errors is not None:
         print_model_errors(rel_val_errors)
+    if model_params is not None:
+        model_params.to_csv(join(path_figures, "model_params.csv"))
+    if training_params is not None:
+        training_params.to_csv(join(path_figures, "training_params.csv"))
     for i in model_list:
         if history:
             plot_model_history(
-                models[i],
-                loss_history_trains[i],
-                loss_history_vals[i],
+                histories[i],
                 plot_name=f"{plot_name}_{i}",
                 path_figures=path_figures,
             )

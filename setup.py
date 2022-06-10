@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="extratorch",
-    version="1.0",
+    version="1.1",
     packages=["extratorch"],
     url="https://github.com/alexarntzen/extratorch.git",
     license="MIT",
@@ -15,5 +15,6 @@ setup(
         "matplotlib>=3.2.0",
         "scikit-learn>=0.24.1",
         "tqdm>=4.63.0",
+        "pandas>=1.2.4",
     ],
 )

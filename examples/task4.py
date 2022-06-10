@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from extratorch.FFNN_model import fit_FFNN
+from extratorch.train import fit_module
 from extratorch.validation import (
     k_fold_cv_grid,
     get_scaled_results,
@@ -22,9 +22,9 @@ from extratorch.optimization import argmin
 # Path data
 ########
 PATH_FIGURES = "figures/task4"
-PATH_TRAINING_DATA = "example_data/Task4/TrainingData.txt"
-PATH_MEASURED_DATA = "example_data/Task4/MeasuredData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task4.txt"
+PATH_TRAINING_DATA = "../example_data/Task4/TrainingData.txt"
+PATH_MEASURED_DATA = "../example_data/Task4/MeasuredData.txt"
+PATH_SUBMISSION = "sol_Task4.txt"
 ########
 
 model_params = MODEL_PARAMS_T
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # train model
     cv_results = k_fold_cv_grid(
         model_params=model_params_iter,
-        fit=fit_FFNN,
+        fit=fit_module,
         training_params=training_params_iter,
         data=data_train,
         partial=False,

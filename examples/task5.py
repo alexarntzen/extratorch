@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from qmcpy.discrete_distribution import Sobol
 
-from extratorch.FFNN_model import fit_FFNN
+from extratorch.train import fit_module
 from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
@@ -21,8 +21,8 @@ from examples.task5_model_params import (
 # Path data
 ########
 PATH_FIGURES = "figures/task5"
-PATH_TRAINING_DATA = "example_data/Task5/TrainingData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task5.txt"
+PATH_TRAINING_DATA = "../example_data/Task5/TrainingData.txt"
+PATH_SUBMISSION = "sol_Task5.txt"
 ########
 
 model_params = MODEL_PARAMS_CF
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # train model
     cv_results = k_fold_cv_grid(
         model_params=model_params_iter,
-        fit=fit_FFNN,
+        fit=fit_module,
         training_params=training_params_iter,
         data=data_model_train,
         partial=False,

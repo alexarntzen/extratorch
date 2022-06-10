@@ -1,4 +1,4 @@
-from extratorch.FFNN_model import FFNN, init_xavier
+from extratorch.models import FFNN, init_xavier
 
 SET_NAME = "final"
 FOLDS = 5

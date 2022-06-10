@@ -2,7 +2,7 @@ import torch.utils.data
 import numpy as np
 import pandas as pd
 
-from extratorch.FFNN_model import fit_FFNN
+from extratorch.train import fit_module
 from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
@@ -23,9 +23,9 @@ from extratorch.forcasting import TimeSeriesDataset, get_structured_prediction
 # Path data
 ########
 PATH_FIGURES = "figures/task3"
-PATH_TRAINING_DATA = "example_data/Task3/TrainingData.txt"
-PATH_TESTING_POINTS = "example_data/Task3/TestingData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task3.txt"
+PATH_TRAINING_DATA = "../example_data/Task3/TrainingData.txt"
+PATH_TESTING_POINTS = "../example_data/Task3/TestingData.txt"
+PATH_SUBMISSION = "sol_Task3.txt"
 ########
 
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # do training with cross validation
     cv_results = k_fold_cv_grid(
         model_params=model_params_iter,
-        fit=fit_FFNN,
+        fit=fit_module,
         training_params=training_params_iter,
         data=data,
         partial=False,

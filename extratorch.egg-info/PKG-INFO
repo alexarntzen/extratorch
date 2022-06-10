@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: extratorch
+Version: 1.1
+Summary: Useful extra functions for the PyTorch library.
+Home-page: https://github.com/alexarntzen/extratorch.git
+Author: Alexander Johan Arntzen
+Author-email: hello@alexarntzen.com
+License: MIT
+Platform: UNKNOWN
+
+UNKNOWN
+

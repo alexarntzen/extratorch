@@ -21,7 +21,7 @@
 report/main.pdf
 
 # To not include generated figures in project
-figures/*
+examples/figures/*
 test/figures
 
 ## Intermediate documents:

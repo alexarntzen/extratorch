@@ -1,4 +1,4 @@
-from extratorch.FFNN_model import FFNN, init_xavier
+from extratorch.models import FFNN, init_xavier
 
 DATA_COLUMN = "ts0"
 SET_NAME = f"final_{DATA_COLUMN}"

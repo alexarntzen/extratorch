@@ -9,7 +9,7 @@ from extratorch.multilevel import (
     MultilevelFFNN,
     get_multilevel_RRSE,
 )
-from extratorch.FFNN_model import get_trained_model, init_xavier
+from extratorch.models import get_trained_model, init_xavier
 
 
 class TestMultilevel(unittest.TestCase):
@@ -81,7 +81,7 @@ class TestMultilevel(unittest.TestCase):
             "init_weight_seed": 20,
             "init": init_xavier,
         }
-        model, loss_history_train, loss_history_val = get_trained_model(
+        model, history = get_trained_model(
             model_param=model_params,
             training_param=training_params,
             data=ml_dataset,

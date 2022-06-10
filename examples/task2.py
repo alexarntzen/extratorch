@@ -9,7 +9,7 @@ from extratorch.validation import (
     get_scaled_results,
 )
 from extratorch.plotting import plot_model_scatter, plot_result, plot_compare_scatter
-from extratorch.FFNN_model import fit_FFNN  # to bad multilevel vas not used :(
+from extratorch.train import fit_module  # to bad multilevel vas not used :(
 from examples.task2_model_params import (
     MODEL_PARAMS_cf,
     TRAINING_PARAMS_cf,
@@ -20,12 +20,12 @@ from examples.task2_model_params import (
 # Path data
 ########
 PATH_FIGURES = "figures/task2"
-PATH_TRAINING_DATA_101 = "example_data/Task2/TrainingData_101.txt"
-PATH_TRAINING_DATA_401 = "example_data/Task2/TrainingData_401.txt"
-PATH_TRAINING_DATA_1601 = "example_data/Task2/TrainingData_1601.txt"
-PATH_TESTING_POINTS = "example_data/Task2/TestingData.txt"
-PATH_SOBOL_POINTS = "example_data/Task2/samples_sobol.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task2.txt"
+PATH_TRAINING_DATA_101 = "../example_data/Task2/TrainingData_101.txt"
+PATH_TRAINING_DATA_401 = "../example_data/Task2/TrainingData_401.txt"
+PATH_TRAINING_DATA_1601 = "../example_data/Task2/TrainingData_1601.txt"
+PATH_TESTING_POINTS = "../example_data/Task2/TestingData.txt"
+PATH_SOBOL_POINTS = "../example_data/Task2/samples_sobol.txt"
+PATH_SUBMISSION = "sol_Task2.txt"
 ########
 
 # Vizualization and validation parameters
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     cv_results = k_fold_cv_grid(
         model_params=model_params_iter,
-        fit=fit_FFNN,
+        fit=fit_module,
         training_params=training_params_iter,
         data=data_ml,
         partial=False,

@@ -6,7 +6,8 @@ import torch.utils.data
 
 import numpy as np
 
-from extratorch.FFNN_model import get_trained_model, FFNN, fit_FFNN, init_xavier
+from extratorch.train import fit_module
+from extratorch.models import FFNN, init_xavier, get_trained_model
 from extratorch.validation import (
     create_subdictionary_iterator,
     get_RRSE,
@@ -52,7 +53,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "init_weight_seed": 20,
         }
 
-        model, loss_history_train, loss_history_val = get_trained_model(
+        model, loss_history = get_trained_model(
             model_params, training_params, data=self.data
         )
 
@@ -90,7 +91,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             model_params_iterator,
             training_params_iterator,
             data=self.data,
-            fit=fit_FFNN,
+            fit=fit_module,
             get_error=get_RRSE,
             folds=3,
         )
@@ -132,7 +133,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
 
         cv_results = k_fold_cv_grid(
             model_params=model_params_iterator,
-            fit=fit_FFNN,
+            fit=fit_module,
             training_params=training_params_iterator,
             data=self.data,
             folds=5,

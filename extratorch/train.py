@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,94 +11,6 @@ from collections.abc import Callable
 # GLOBAL VARIABLES
 
 larning_rates = {"ADAM": 0.001, "LBFGS": 0.1, "strong_wolfe": 1}
-
-activations = {
-    "LeakyReLU": nn.LeakyReLU,
-    "relu": nn.ReLU(),
-    "sigmoid": nn.Sigmoid(),
-    "tanh": nn.Tanh(),
-}
-
-
-def init_xavier(model, init_weight_seed=None, **kwargs):
-    if init_weight_seed is not None:
-        torch.manual_seed(init_weight_seed)
-
-    def init_weights(m):
-        if type(m) == nn.Linear and m.weight.requires_grad and m.bias.requires_grad:
-            g = nn.init.calculate_gain(model.activation)
-            # torch.nn.init.xavier_uniform_(m.weight, gain=g)
-            torch.nn.init.xavier_normal_(m.weight, gain=g)
-            m.bias.data.fill_(0)
-
-    model.apply(init_weights)
-    return model
-
-
-class FFNN(nn.Module):
-    def __init__(
-        self,
-        input_dimension,
-        output_dimension,
-        n_hidden_layers,
-        neurons,
-        activation: Union[str, callable] = "tanh",
-        init=None,
-        **kwargs,
-    ):
-        super(FFNN, self).__init__()
-
-        # Number of input dimensions n
-        self.input_dimension = input_dimension
-        # Number of output dimensions m
-        self.output_dimension = output_dimension
-        # Number of neurons per layer
-        self.neurons = neurons
-        # Number of hidden layers
-        self.n_hidden_layers = n_hidden_layers
-        # Activation function
-        self.activation = activation
-        if isinstance(activation, str):
-            self.activation_func = activations[self.activation]
-        elif callable(activation):
-            self.activation_func = activation()
-        else:
-            raise ValueError(f"Activation {activation} not recognized")
-
-        self.input_layer = nn.Linear(self.input_dimension, self.neurons)
-        self.hidden_layers = nn.ModuleList(
-            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers - 1)]
-        )
-        self.output_layer = nn.Linear(self.neurons, self.output_dimension)
-
-        # init
-        if init is not None:
-            init(self)
-
-    def forward(self, x):
-        # The forward function performs the set of affine and
-        # non-linear transformations defining the network
-        # (see equation above)
-        x = self.activation_func(self.input_layer(x))
-        for k, l in enumerate(self.hidden_layers):
-            x = self.activation_func(l(x))
-        return self.output_layer(x)
-
-    def __str__(self):
-        """reuturn name of class"""
-        return type(self).__name__
-
-
-def NeuralNet_Seq(input_dimension, output_dimension, n_hidden_layers, neurons):
-    modules = list()
-    modules.append(nn.Linear(input_dimension, neurons))
-    modules.append(nn.Tanh())
-    for _ in range(n_hidden_layers):
-        modules.append(nn.Linear(neurons, neurons))
-        modules.append(nn.Tanh())
-    modules.append(nn.Linear(neurons, output_dimension))
-    model = nn.Sequential(*modules)
-    return model
 
 
 def regularization(model, p):
@@ -118,7 +31,7 @@ def compute_loss_torch(
     return loss
 
 
-def fit_FFNN(
+def fit_module(
     model: nn.Module,
     data,
     num_epochs,
@@ -140,7 +53,7 @@ def fit_FFNN(
     post_batch: Callable = None,
     post_epoch: Callable = None,
     **kwargs,
-) -> tuple[Callable, np.array, np.array]:
+) -> tuple[nn.Module, pd.DataFrame]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
 
@@ -176,8 +89,7 @@ def fit_FFNN(
 
     # Learning Rate Scheduler
 
-    if lr_scheduler is not None:
-        scheduler = lr_scheduler(optimizer_)
+    scheduler = lr_scheduler(optimizer_) if lr_scheduler is not None else None
 
     loss_history_train = list()
     loss_history_val = list()
@@ -187,10 +99,10 @@ def fit_FFNN(
 
     nan_steps = 0
     # Loop over epochs
-    epohcs_tqdm = tqdm(
+    epochs_tqdm = tqdm(
         range(num_epochs), desc="Epoch: ", disable=(not verbose), leave=False
     )
-    for epoch in epohcs_tqdm:
+    for epoch in epochs_tqdm:
         try:
             # try one epoch, break if interupted:
             training_set = DataLoader(
@@ -264,12 +176,12 @@ def fit_FFNN(
             if verbose and track_history:
                 print_iter = epoch if track_epoch else -1
                 if data_val is not None and len(data_val) > 0:
-                    epohcs_tqdm.set_postfix(
+                    epochs_tqdm.set_postfix(
                         loss=loss_history_train[print_iter],
                         val_loss=loss_history_val[print_iter],
                     )
                 else:
-                    epohcs_tqdm.set_postfix(
+                    epochs_tqdm.set_postfix(
                         loss=loss_history_train[print_iter],
                     )
             if nan_steps > max_nan_steps:
@@ -280,34 +192,12 @@ def fit_FFNN(
             break
 
     if verbose and track_history and len(loss_history_train) > 0:
-        print("\nFinal training Loss: ", np.round(loss_history_train[-1], 8))
+        print("\nFinal training loss: ", np.round(loss_history_train[-1], 8))
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
-    return model, np.array(loss_history_train), np.array(loss_history_val)
-
-
-def get_trained_model(
-    model_param,
-    training_param,
-    data,
-    data_val=None,
-    fit=fit_FFNN,
-):
-    # Xavier weight initialization
-    model = model_param.pop("model")(**model_param)
-    model, loss_history_train, loss_history_val = fit(
-        model=model,
-        data=data,
-        data_val=data_val,
-        **training_param,
-        model_param=model_param,
+    history = pd.DataFrame(
+        {"Validation loss": loss_history_train, "Training loss": loss_history_val}
     )
-    return model, loss_history_train, loss_history_val
-
-
-def get_scaled_model(model, x_center=0, x_scale=1, y_center=0, y_scale=1):
-    def scaled_model(x):
-        return model((x - x_center) / x_scale) * y_scale + y_center
-
-    return scaled_model
+    history.index.name = "Epochs" if track_epoch else "Iterations"
+    return model, history

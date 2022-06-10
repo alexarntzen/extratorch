@@ -87,11 +87,27 @@ def k_fold_cv_grid(
         models_instance_k = []
         histories_k = []
         for k_num, (train_index, val_index) in enumerate(splits):
-            if verbose:
-                print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
-                print(f"Parameters: {model_param, training_param}")
 
-            # if no validaton data do k_fold splits
+            # print and store running information
+            index = model_num * trial * k_num + trial * k_num + k_num
+            run_table = pd.DataFrame(
+                dict(model_num=model_num, trial=trial, fold=k_num), index=[index]
+            )
+
+            model_params_df = pd.DataFrame(model_param, index=[index])
+            training_params_df = pd.DataFrame(training_param, index=[index])
+
+            if verbose:
+                print(
+                    f"\nRunning model (trial:{trial}, model:{model_num}, fold:{k_num}):"
+                )
+                print(model_params_df.to_string(index=False))
+                print(training_params_df.to_string(index=False))
+
+            model_params_df = pd.concat([model_params_df, run_table], axis=1)
+            training_params_df = pd.concat([training_params_df, run_table], axis=1)
+
+            # if no validation data do k_fold splits
             if val_data is None:
                 data_val_k = Subset(data, val_index)
                 data_train_k = Subset(data, train_index)
@@ -109,15 +125,6 @@ def k_fold_cv_grid(
                 verbose=verbose,
             )
 
-            index = model_num * trial * k_num + trial * k_num + k_num
-            model_params_df = pd.DataFrame(
-                model_param | dict(model_num=model_num, trial=trial, fold=k_num),
-                index=[index],
-            )
-            training_params_df = pd.DataFrame(
-                training_param | dict(model_num=model_num, trial=trial, fold=k_num),
-                index=[index],
-            )
             model_params_dfs.append(model_params_df)
             training_params_dfs.append(training_params_df)
 

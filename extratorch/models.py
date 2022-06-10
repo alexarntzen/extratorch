@@ -62,7 +62,7 @@ class FFNN(nn.Module):
         return self.output_layer(x)
 
     def __str__(self):
-        """reuturn name of class"""
+        """return name of class"""
         return type(self).__name__
 
 

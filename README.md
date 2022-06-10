@@ -1,6 +1,5 @@
 [![Python testing](https://github.com/alexarntzen/extratorch/workflows/Python%20testing/badge.svg)](https://github.com/alexarntzen/extratorch/actions/workflows/python_test.yml)
 [![Python linting](https://github.com/alexarntzen/extratorch/workflows/Python%20linting/badge.svg)](https://github.com/alexarntzen/extratorch/actions/workflows/python_lint.yml)
-[![Latex compiled](https://github.com/alexarntzen/extratorch/workflows/Compile%20latex/badge.svg)](https://github.com/alexarntzen/extratorch/actions/workflows/compile_latex.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # extratorch

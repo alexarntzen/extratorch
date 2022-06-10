@@ -5,7 +5,7 @@ from torch.utils.data import Subset, DataLoader, Dataset
 import itertools
 from sklearn.model_selection import KFold
 
-from deepthermal.FFNN_model import get_scaled_model, fit_FFNN
+from extratorch.FFNN_model import get_scaled_model, fit_FFNN
 
 
 # Root Relative Squared Error

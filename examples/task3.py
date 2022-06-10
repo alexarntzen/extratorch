@@ -2,14 +2,14 @@ import torch.utils.data
 import numpy as np
 import pandas as pd
 
-from deepthermal.FFNN_model import fit_FFNN
-from deepthermal.validation import (
+from extratorch.FFNN_model import fit_FFNN
+from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
     get_scaled_results,
 )
-from deepthermal.plotting import plot_result, plot_result_sorted
-from task_solutions.task3_model_params import (
+from extratorch.plotting import plot_result, plot_result_sorted
+from examples.task3_model_params import (
     model_params,
     training_params,
     INPUT_WIDTH,
@@ -18,13 +18,13 @@ from task_solutions.task3_model_params import (
     SET_NAME,
     DATA_COLUMN,
 )
-from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
+from extratorch.forcasting import TimeSeriesDataset, get_structured_prediction
 
 # Path data
 ########
 PATH_FIGURES = "figures/task3"
-PATH_TRAINING_DATA = "Task3/TrainingData.txt"
-PATH_TESTING_POINTS = "Task3/TestingData.txt"
+PATH_TRAINING_DATA = "example_data/Task3/TrainingData.txt"
+PATH_TESTING_POINTS = "example_data/Task3/TestingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task3.txt"
 ########
 

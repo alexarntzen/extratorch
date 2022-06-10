@@ -3,7 +3,7 @@ from matplotlib.figure import Figure
 import numpy as np
 import torch
 import warnings
-from deepthermal.validation import print_model_errors
+from extratorch.validation import print_model_errors
 
 
 def get_disc_str(model):

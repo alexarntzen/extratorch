@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from qmcpy.discrete_distribution import Sobol
 
-from deepthermal.FFNN_model import fit_FFNN
-from deepthermal.validation import (
+from extratorch.FFNN_model import fit_FFNN
+from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
 )
-from deepthermal.plotting import plot_result, plot_model_scatter
-from deepthermal.optimization import argmin
-from task_solutions.task5_model_params import (
+from extratorch.plotting import plot_result, plot_model_scatter
+from extratorch.optimization import argmin
+from examples.task5_model_params import (
     MODEL_PARAMS_CF,
     TRAINING_PARAMS_CF,
     FOLDS,
@@ -21,7 +21,7 @@ from task_solutions.task5_model_params import (
 # Path data
 ########
 PATH_FIGURES = "figures/task5"
-PATH_TRAINING_DATA = "Task5/TrainingData.txt"
+PATH_TRAINING_DATA = "example_data/Task5/TrainingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task5.txt"
 ########
 

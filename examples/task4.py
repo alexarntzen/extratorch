@@ -3,27 +3,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from deepthermal.FFNN_model import fit_FFNN
-from deepthermal.validation import (
+from extratorch.FFNN_model import fit_FFNN
+from extratorch.validation import (
     k_fold_cv_grid,
     get_scaled_results,
     create_subdictionary_iterator,
 )
-from deepthermal.plotting import plot_result
-from task_solutions.task4_model_params import (
+from extratorch.plotting import plot_result
+from examples.task4_model_params import (
     MODEL_PARAMS_T,
     TRAINING_PARAMS_T,
     V_GUESS_,
     SET_NAME,
     FOLDS,
 )
-from deepthermal.optimization import argmin
+from extratorch.optimization import argmin
 
 # Path data
 ########
 PATH_FIGURES = "figures/task4"
-PATH_TRAINING_DATA = "Task4/TrainingData.txt"
-PATH_MEASURED_DATA = "Task4/MeasuredData.txt"
+PATH_TRAINING_DATA = "example_data/Task4/TrainingData.txt"
+PATH_MEASURED_DATA = "example_data/Task4/MeasuredData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task4.txt"
 ########
 

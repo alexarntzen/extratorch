@@ -5,7 +5,7 @@ import torch.utils.data
 
 import numpy as np
 
-from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
+from extratorch.forcasting import TimeSeriesDataset, get_structured_prediction
 
 
 class TestPrediction(unittest.TestCase):

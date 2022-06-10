@@ -6,8 +6,8 @@ import torch.utils.data
 
 import numpy as np
 
-from deepthermal.FFNN_model import get_trained_model, FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import (
+from extratorch.FFNN_model import get_trained_model, FFNN, fit_FFNN, init_xavier
+from extratorch.validation import (
     create_subdictionary_iterator,
     get_RRSE,
     k_fold_cv_grid,

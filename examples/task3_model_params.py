@@ -1,4 +1,4 @@
-from deepthermal.forcasting import LSTM
+from extratorch.forcasting import LSTM
 
 ########
 DATA_COLUMN = "ts0"

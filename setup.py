@@ -1,12 +1,19 @@
 from setuptools import setup
 
 setup(
-    name="deepthermal",
-    version="1.5",
-    packages=["deepthermal"],
-    url="https://github.com/alexarntzen/deepthermal.git",
+    name="extratorch",
+    version="1.0",
+    packages=["extratorch"],
+    url="https://github.com/alexarntzen/extratorch.git",
     license="MIT",
     author="Alexander Johan Arntzen",
     author_email="hello@alexarntzen.com",
-    description="Project using deep learning to model thermal storage for solar panels",
+    description="Useful extra functions for the PyTorch library.",
+    install_requires=[
+        "torch>=1.8.1",
+        "numpy>=1.18.2",
+        "matplotlib>=3.2.0",
+        "scikit-learn>=0.24.1",
+        "tqdm>=4.63.0",
+    ],
 )

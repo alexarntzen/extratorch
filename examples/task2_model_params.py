@@ -1,4 +1,4 @@
-from deepthermal.FFNN_model import FFNN, init_xavier
+from extratorch.FFNN_model import FFNN, init_xavier
 
 SET_NAME = "final_collected_100_"
 FOLDS = 10

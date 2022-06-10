@@ -3,7 +3,7 @@ import torch
 import torch.utils
 import torch.utils.data
 
-from deepthermal.optimization import argmin
+from extratorch.optimization import argmin
 
 
 class TestOptimizer(unittest.TestCase):

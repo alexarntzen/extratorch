@@ -2,14 +2,14 @@ import unittest
 import torch
 import numpy as np
 
-from deepthermal.multilevel import (
+from extratorch.multilevel import (
     MultilevelDataset,
     get_level_dataset,
     fit_multilevel_FFNN,
     MultilevelFFNN,
     get_multilevel_RRSE,
 )
-from deepthermal.FFNN_model import get_trained_model, init_xavier
+from extratorch.FFNN_model import get_trained_model, init_xavier
 
 
 class TestMultilevel(unittest.TestCase):

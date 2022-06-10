@@ -3,14 +3,14 @@ from torch.utils.data import TensorDataset
 import numpy as np
 import pandas as pd
 
-from deepthermal.FFNN_model import fit_FFNN
-from deepthermal.validation import (
+from extratorch.FFNN_model import fit_FFNN
+from extratorch.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
     get_scaled_results,
 )
-from deepthermal.plotting import plot_result, plot_model_1d
-from task_solutions.task1_model_params import (
+from extratorch.plotting import plot_result, plot_model_1d
+from examples.task1_model_params import (
     model_params,
     training_params,
     DATA_COLUMN,
@@ -19,9 +19,9 @@ from task_solutions.task1_model_params import (
 )
 
 ########
-PATH_FIGURES = "figures/task1"
-PATH_TRAINING_DATA = "Task1/TrainingData.txt"
-PATH_TESTING_POINTS = "Task1/TestingData.txt"
+PATH_FIGURES = "../figures/task1"
+PATH_TRAINING_DATA = "example_data/Task1/TrainingData.txt"
+PATH_TESTING_POINTS = "example_data/Task1/TestingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task1.txt"
 ########
 

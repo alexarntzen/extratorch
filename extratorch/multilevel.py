@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from deepthermal.FFNN_model import fit_FFNN, init_xavier, FFNN
+from extratorch.FFNN_model import fit_FFNN, init_xavier, FFNN
 
 
 class MultilevelFFNN(FFNN):

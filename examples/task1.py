@@ -62,7 +62,6 @@ if __name__ == "__main__":
     y_train = (y_train_ - Y_CENTER) / Y_SCALE
 
     data = TensorDataset(x_train, y_train)
-    val_data = TensorDataset(x_train, y_train)
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
@@ -71,7 +70,6 @@ if __name__ == "__main__":
         fit=fit_module,
         training_params=training_params_iter,
         data=data,
-        val_data=val_data,
         partial=False,
         folds=FOLDS,
         verbose=True,

@@ -9,7 +9,8 @@ from typing import Union, List
 from collections.abc import Callable
 
 # GLOBAL VARIABLES
-
+LRS = optim.lr_scheduler._LRScheduler
+InitScheduler = Callable[[optim.Optimizer], LRS]
 larning_rates = {"ADAM": 0.001, "LBFGS": 0.1, "strong_wolfe": 1}
 
 
@@ -46,7 +47,7 @@ def fit_module(
     verbose=False,
     learning_rate=None,
     init_weight_seed: int = None,
-    lr_scheduler=None,
+    lr_scheduler: InitScheduler = None,
     loss_func=nn.MSELoss(),
     compute_loss: Callable[..., torch.Tensor] = compute_loss_torch,
     max_nan_steps=50,

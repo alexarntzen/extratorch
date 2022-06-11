@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import torch.utils
 from torch.utils.data import Subset, DataLoader, Dataset
@@ -42,11 +44,11 @@ def get_NRMSE(model, data, type_str="", verbose=False):
 def k_fold_cv_grid(
     model_params,
     training_params,
-    data: Dataset,
+    data: Dataset = None,
     shuffle_folds: bool = True,
     val_data: Dataset = None,
     fit: Callable[..., (torch.nn.Module, pd.DataFrame)] = fit_module,
-    folds=5,
+    folds=1,
     trials=1,
     partial=False,
     verbose=False,
@@ -77,29 +79,24 @@ def k_fold_cv_grid(
         )
     ):
 
-        splits = (
-            KFold(n_splits=folds, shuffle=shuffle_folds).split(data)
-            if folds > 1
-            else ((torch.arange(len(data)), []),)  # ((full set, empty set),)
-        )
-
         rel_train_errors_k = []
         rel_val_errors_k = []
         models_instance_k = []
         histories_k = []
-        for k_num, (train_index, val_index) in enumerate(splits):
+        for fold, (data_train_k, data_val_k) in enumerate(
+            _get_data_splits(folds=folds, data=data, val_data=val_data)
+        ):
 
             # print and store running information
-            index = model_num * trial * k_num + trial * k_num + k_num
-            run_dict = dict(model_num=model_num, trial=trial, fold=k_num)
+            index = model_num * trial * fold + trial * fold + fold
+            run_dict = dict(model_num=model_num, trial=trial, fold=fold)
 
             model_params_df = pd.DataFrame(model_param | run_dict, index=[index])
             training_params_df = pd.DataFrame(training_param | run_dict, index=[index])
 
-            print("verbose", verbose)
             if verbose:
                 print(
-                    f"\nRunning model (trial:{trial}, model:{model_num}, fold:{k_num}):"
+                    f"\nRunning model (trial:{trial}, model:{model_num}, fold:{fold}):"
                 )
                 if print_params:
                     print("Model params:")
@@ -107,13 +104,6 @@ def k_fold_cv_grid(
                     print("Training params:")
                     pretty_dict_print(training_param)
 
-            # if no validation data do k_fold splits
-            if val_data is None:
-                data_val_k = Subset(data, val_index)
-                data_train_k = Subset(data, train_index)
-            else:
-                data_val_k = val_data
-                data_train_k = data
             # train model on data!
             model_param_k = model_param.copy()
             model_instance = model_param_k.pop("model")(**model_param_k)
@@ -151,6 +141,23 @@ def k_fold_cv_grid(
         "rel_val_errors": rel_val_errors,
     }
     return k_fold_grid
+
+
+def _get_data_splits(folds=1, data=None, val_data=None, shuffle=True):
+    # do some validation here so to avoid mistakes
+    if data is None:
+        assert folds == 1, "will not do multiple folds no data"
+    if val_data is not None and folds != 1:
+        warnings.warn("Got validation data, will not split trainig data")
+        folds = 1
+
+    if folds == 1:
+        yield data, val_data
+    else:
+        for train_index, val_index in KFold(n_splits=folds, shuffle=shuffle).split(
+            data
+        ):
+            yield Subset(data, val_index), Subset(data, train_index)
 
 
 def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:

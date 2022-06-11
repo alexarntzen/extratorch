@@ -1,3 +1,4 @@
+from extratorch import plotting, validation, models
 from extratorch.models import FFNN
 from extratorch.train import fit_module
 from extratorch.validation import (

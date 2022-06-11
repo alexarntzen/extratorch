@@ -152,14 +152,13 @@ def plot_model_1d(model, x_test, **kwargs):
 
 def plot_result(
     models,
-    histories: pd.DataFrame,
+    histories: List[List[pd.DataFrame]] = None,
     path_figures="",
     plot_name="plot",
     rel_val_errors=None,
     plot_function=None,
     function_kwargs=None,
     model_list=None,
-    history: List[List[pd.DataFrame]] = True,
     model_params: pd.DataFrame = None,
     training_params: pd.DataFrame = None,
     **kwargs,
@@ -173,12 +172,14 @@ def plot_result(
     if training_params is not None:
         training_params.to_csv(join(path_figures, "training_params.csv"))
     for i in model_list:
-        if history:
+        if histories is not None:
             plot_model_history(
                 histories[i],
                 plot_name=f"{plot_name}_{i}",
                 path_figures=path_figures,
             )
+            for j, history in enumerate(histories[i]):
+                history.to_csv(join(path_figures, f"history_{plot_name}_{i}_{j}.csv"))
         if plot_function is not None:
             for j in range(len(models[i])):
                 plot_function(

@@ -50,6 +50,7 @@ def k_fold_cv_grid(
     trials=1,
     partial=False,
     verbose=False,
+    print_params: bool = False,
     get_error=None,
 ):
     # transform a dictionary with a list of inputs
@@ -90,22 +91,21 @@ def k_fold_cv_grid(
 
             # print and store running information
             index = model_num * trial * k_num + trial * k_num + k_num
-            run_table = pd.DataFrame(
-                dict(model_num=model_num, trial=trial, fold=k_num), index=[index]
-            )
+            run_dict = dict(model_num=model_num, trial=trial, fold=k_num)
 
-            model_params_df = pd.DataFrame(model_param, index=[index])
-            training_params_df = pd.DataFrame(training_param, index=[index])
+            model_params_df = pd.DataFrame(model_param | run_dict, index=[index])
+            training_params_df = pd.DataFrame(training_param | run_dict, index=[index])
 
+            print("verbose", verbose)
             if verbose:
                 print(
                     f"\nRunning model (trial:{trial}, model:{model_num}, fold:{k_num}):"
                 )
-                print(model_params_df.to_string(index=False))
-                print(training_params_df.to_string(index=False))
-
-            model_params_df = pd.concat([model_params_df, run_table], axis=1)
-            training_params_df = pd.concat([training_params_df, run_table], axis=1)
+                if print_params:
+                    print("Model params:")
+                    pretty_dict_print(model_param)
+                    print("Training params:")
+                    pretty_dict_print(training_param)
 
             # if no validation data do k_fold splits
             if val_data is None:
@@ -176,6 +176,12 @@ def print_model_errors(rel_val_errors, **kwargs):
     for i, rel_val_error_list in enumerate(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
         print(f"Model {i} average error: {avg_error}")
+
+
+def pretty_dict_print(d: dict):
+    for key, value in d.items():
+        print(f"{key}: {value}", end=", ")
+    print("")
 
 
 def get_scaled_results(cv_results, x_center=0, x_scale=1, y_center=0, y_scale=1):

@@ -5,6 +5,7 @@ import torch.utils
 from torch.utils.data import Subset, DataLoader, Dataset
 import pandas as pd
 import itertools
+from itertools import product as prod
 from sklearn.model_selection import KFold
 from collections.abc import Callable
 from extratorch.train import fit_module
@@ -67,6 +68,7 @@ def k_fold_cv_grid(
     else:
         training_params_iter = training_params
 
+    run_index = 0
     models = []
     histories = []
     rel_train_errors = []
@@ -74,64 +76,64 @@ def k_fold_cv_grid(
     model_params_dfs = []
     training_params_dfs = []
 
-    for trial in range(trials):
-        for model_num, (model_param, training_param) in enumerate(
-            itertools.product(model_params_iter, training_params_iter)
+    for trial, (model_num, (model_param, training_param)) in prod(
+        range(trials),
+        enumerate(prod(model_params_iter, training_params_iter)),
+    ):
+        rel_train_errors_k = []
+        rel_val_errors_k = []
+        models_instance_k = []
+        histories_k = []
+        for fold, (data_train_k, data_val_k) in enumerate(
+            _get_data_splits(
+                folds=folds, data=data, val_data=val_data, shuffle=shuffle_folds
+            )
         ):
-            rel_train_errors_k = []
-            rel_val_errors_k = []
-            models_instance_k = []
-            histories_k = []
-            for fold, (data_train_k, data_val_k) in enumerate(
-                _get_data_splits(folds=folds, data=data, val_data=val_data)
-            ):
 
-                # print and store running information
-                index = model_num * trial * fold + trial * fold + fold
-                run_dict = dict(model_num=model_num, trial=trial, fold=fold)
+            # print and store running information
+            run_dict = dict(model_num=model_num, trial=trial, fold=fold)
 
-                model_params_df = pd.DataFrame(model_param | run_dict, index=[index])
-                training_params_df = pd.DataFrame(
-                    training_param | run_dict, index=[index]
-                )
+            model_params_df = pd.DataFrame(model_param | run_dict, index=[run_index])
+            training_params_df = pd.DataFrame(
+                training_param | run_dict, index=[run_index]
+            )
+            if verbose:
+                print(f"Running trial:{trial}, model:{model_num}, fold:{fold}:")
+                if print_params:
+                    print("Model params:")
+                    pretty_dict_print(model_param)
+                    print("Training params:")
+                    pretty_dict_print(training_param)
 
-                if verbose:
-                    print(
-                        f"Running trial:{trial}, model:{model_num}, fold:{fold}:"
-                    )
-                    if print_params:
-                        print("Model params:")
-                        pretty_dict_print(model_param)
-                        print("Training params:")
-                        pretty_dict_print(training_param)
+            # train model on data!
+            model_param_k = model_param.copy()
+            model_instance = model_param_k.pop("model")(**model_param_k)
+            model_instance, history = fit(
+                model=model_instance,
+                **training_param,
+                data=data_train_k,
+                data_val=data_val_k,
+                verbose=verbose,
+            )
 
-                # train model on data!
-                model_param_k = model_param.copy()
-                model_instance = model_param_k.pop("model")(**model_param_k)
-                model_instance, history = fit(
-                    model=model_instance,
-                    **training_param,
-                    data=data_train_k,
-                    data_val=data_val_k,
-                    verbose=verbose,
-                )
+            model_params_dfs.append(model_params_df)
+            training_params_dfs.append(training_params_df)
 
-                model_params_dfs.append(model_params_df)
-                training_params_dfs.append(training_params_df)
+            models_instance_k.append(model_instance)
+            histories_k.append(history)
+            if callable(get_error):
+                rel_train_errors_k.append(get_error(model_instance, data_train_k))
+                rel_val_errors_k.append(get_error(model_instance, data_val_k))
 
-                models_instance_k.append(model_instance)
-                histories_k.append(history)
-                if callable(get_error):
-                    rel_train_errors_k.append(get_error(model_instance, data_train_k))
-                    rel_val_errors_k.append(get_error(model_instance, data_val_k))
-                if partial:
-                    break
+            run_index += 1
+            if partial:
+                break
 
-            models.append(models_instance_k)
-            histories.append(histories_k)
-            if len(rel_train_errors_k) > 0:
-                rel_train_errors.append(rel_train_errors_k)
-                rel_val_errors.append(rel_val_errors_k)
+        models.append(models_instance_k)
+        histories.append(histories_k)
+        if len(rel_train_errors_k) > 0:
+            rel_train_errors.append(rel_train_errors_k)
+            rel_val_errors.append(rel_val_errors_k)
 
     k_fold_grid = {
         "models": models,

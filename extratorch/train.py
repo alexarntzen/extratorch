@@ -193,7 +193,7 @@ def fit_module(
             break
 
     if verbose and track_history and len(loss_history_train) > 0:
-        print("\nFinal training loss: ", np.round(loss_history_train[-1], 8))
+        print("Final training loss: ", np.round(loss_history_train[-1], 8))
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 

@@ -95,15 +95,12 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             get_error=get_RRSE,
             folds=3,
         )
-        avg_rel_val_errors = torch.mean(
-            torch.tensor(cv_results["rel_val_errors"]), dim=1
-        )
+        avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]))
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.1)
 
-        for submodels in cv_results["models"]:
-            for model in submodels:
-                rel_test_error = get_RRSE(model, self.data_test)
-                self.assertAlmostEqual(0, rel_test_error, delta=0.1)
+        for model in cv_results["models"]:
+            rel_test_error = get_RRSE(model, self.data_test)
+            self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
     def test_k_fold_cv_grid_partial(self):
         print(
@@ -142,14 +139,13 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         )
 
         avg_rel_val_errors = torch.mean(
-            torch.tensor(cv_results["rel_val_errors"]), dim=1
+            torch.tensor(cv_results["rel_val_errors"]),
         )
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.1)
 
-        for submodels in cv_results["models"]:
-            for model in submodels:
-                rel_test_error = get_RRSE(model, self.data_test)
-                self.assertAlmostEqual(0, rel_test_error, delta=0.1)
+        for model in cv_results["models"]:
+            rel_test_error = get_RRSE(model, self.data_test)
+            self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
 
 if __name__ == "__main__":

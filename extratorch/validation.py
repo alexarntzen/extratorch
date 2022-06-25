@@ -1,10 +1,13 @@
+import copy
 import warnings
 
+import numpy as np
 import torch
 import torch.utils
 from torch.utils.data import Subset, DataLoader, Dataset
 import pandas as pd
 import itertools
+from tqdm.auto import tqdm
 from itertools import product as prod
 from sklearn.model_selection import KFold
 from collections.abc import Callable
@@ -52,9 +55,10 @@ def k_fold_cv_grid(
     folds=1,
     trials=1,
     partial=False,
-    verbose=False,
+    verbose=True,
     print_params: bool = False,
     get_error=None,
+    copy_data: bool = False,
 ):
     # transform a dictionary with a list of inputs
     # into an iterator over the coproduct of the lists
@@ -68,72 +72,71 @@ def k_fold_cv_grid(
     else:
         training_params_iter = training_params
 
-    run_index = 0
     models = []
     histories = []
     rel_train_errors = []
     rel_val_errors = []
     model_params_dfs = []
     training_params_dfs = []
-
-    for trial, (model_num, (model_param, training_param)) in prod(
-        range(trials),
-        enumerate(prod(model_params_iter, training_params_iter)),
-    ):
-        rel_train_errors_k = []
-        rel_val_errors_k = []
-        models_instance_k = []
-        histories_k = []
-        for fold, (data_train_k, data_val_k) in enumerate(
-            _get_data_splits(
-                folds=folds, data=data, val_data=val_data, shuffle=shuffle_folds
+    models_iter_tqdm = tqdm(
+        enumerate(
+            prod(
+                range(trials),
+                enumerate(prod(model_params_iter, training_params_iter)),
+                enumerate(
+                    _get_data_splits(
+                        folds=folds, data=data, val_data=val_data, shuffle=shuffle_folds
+                    )
+                ),
             )
-        ):
+        ),
+        disable=(not verbose),
+        leave=False,
+    )
+    for index, (trial, (config, config_params), (fold, fold_data)) in models_iter_tqdm:
 
-            # print and store running information
-            run_dict = dict(model_num=model_num, trial=trial, fold=fold)
+        # expand params and data
+        fold_train_data, fold_val_data = fold_data
+        model_param, training_param = config_params
 
-            model_params_df = pd.DataFrame(model_param | run_dict, index=[run_index])
-            training_params_df = pd.DataFrame(
-                training_param | run_dict, index=[run_index]
-            )
-            if verbose:
-                print(f"Running trial:{trial}, model:{model_num}, fold:{fold}:")
-                if print_params:
-                    print("Model params:")
-                    pretty_dict_print(model_param)
-                    print("Training params:")
-                    pretty_dict_print(training_param)
+        # print and store running information
+        run_dict = dict(config=config, trial=trial, fold=fold)
 
-            # train model on data!
-            model_param_k = model_param.copy()
-            model_instance = model_param_k.pop("model")(**model_param_k)
-            model_instance, history = fit(
-                model=model_instance,
-                **training_param,
-                data=data_train_k,
-                data_val=data_val_k,
-                verbose=verbose,
-            )
+        model_params_df = pd.DataFrame(
+            (model_param | run_dict,), index=[index], dtype=object
+        )
+        training_params_df = pd.DataFrame(
+            (training_param | run_dict,), index=[index], dtype=object
+        )
+        if verbose:
+            models_iter_tqdm.set_postfix(trial=trial, config=config, fold=fold)
+            if print_params:
+                print("Model params:")
+                pretty_dict_print(model_param)
+                print("Training params:")
+                pretty_dict_print(training_param)
 
-            model_params_dfs.append(model_params_df)
-            training_params_dfs.append(training_params_df)
+        # train model on data!
+        model_param_k = model_param.copy()
+        model_instance = model_param_k.pop("model")(**model_param_k)
+        model_instance, history = fit(
+            model=model_instance,
+            **training_param,
+            data=copy.deepcopy(fold_train_data) if copy_data else fold_train_data,
+            data_val=copy.deepcopy(fold_val_data) if copy_data else fold_val_data,
+        )
 
-            models_instance_k.append(model_instance)
-            histories_k.append(history)
-            if callable(get_error):
-                rel_train_errors_k.append(get_error(model_instance, data_train_k))
-                rel_val_errors_k.append(get_error(model_instance, data_val_k))
+        model_params_dfs.append(model_params_df)
+        training_params_dfs.append(training_params_df)
 
-            run_index += 1
-            if partial:
-                break
+        models.append(model_instance)
+        histories.append(history)
+        if callable(get_error):
+            rel_train_errors.append(get_error(model_instance, fold_train_data))
+            rel_val_errors.append(get_error(model_instance, fold_val_data))
 
-        models.append(models_instance_k)
-        histories.append(histories_k)
-        if len(rel_train_errors_k) > 0:
-            rel_train_errors.append(rel_train_errors_k)
-            rel_val_errors.append(rel_val_errors_k)
+        if partial:
+            break
 
     k_fold_grid = {
         "models": models,
@@ -160,7 +163,15 @@ def _get_data_splits(folds=1, data=None, val_data=None, shuffle=True):
         for train_index, val_index in KFold(n_splits=folds, shuffle=shuffle).split(
             data
         ):
-            yield Subset(data, val_index), Subset(data, train_index)
+            yield Subset(data, train_index), Subset(data, val_index)
+
+
+# like Tor
+def item_to_list(*values, cycle=False):
+    for value in values:
+        if not isinstance(value, (list, np.ndarray)):
+            value = itertools.cycle([value]) if cycle else [value]
+        yield value
 
 
 def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:
@@ -169,8 +180,10 @@ def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:
     Cartesian product is default
     """
     combine = itertools.product if product else zip
-    for sublist in combine(*dictionary.values()):
+
+    for sublist in combine(*item_to_list(*dictionary.values(), cycle=not product)):
         # convert two list into dictionary
+
         yield dict(zip(dictionary.keys(), sublist))
 
 
@@ -198,15 +211,13 @@ def get_scaled_results(cv_results, x_center=0, x_scale=1, y_center=0, y_scale=1)
     cv_results_scaled = cv_results.copy()
     cv_results_scaled["models"] = []
     for i in range(len(cv_results["models"])):
-        cv_results_scaled["models"].append([])
-        for j in range(len(cv_results["models"][i])):
-            cv_results_scaled["models"][i].append(
-                get_scaled_model(
-                    cv_results["models"][i][j],
-                    x_center=x_center,
-                    x_scale=x_scale,
-                    y_center=y_center,
-                    y_scale=y_scale,
-                )
+        cv_results_scaled["models"][i].append(
+            get_scaled_model(
+                cv_results["models"][i],
+                x_center=x_center,
+                x_scale=x_scale,
+                y_center=y_center,
+                y_scale=y_scale,
             )
+        )
     return cv_results_scaled

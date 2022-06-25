@@ -18,7 +18,7 @@ class FFNN(nn.Module):
         input_dimension,
         output_dimension,
         n_hidden_layers,
-        neurons,
+        neurons=None,
         activation: Union[str, callable] = "tanh",
         init=None,
         **kwargs,
@@ -42,11 +42,15 @@ class FFNN(nn.Module):
         else:
             raise ValueError(f"Activation {activation} not recognized")
 
-        self.input_layer = nn.Linear(self.input_dimension, self.neurons)
-        self.hidden_layers = nn.ModuleList(
-            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers - 1)]
-        )
-        self.output_layer = nn.Linear(self.neurons, self.output_dimension)
+        if neurons is not None:
+            self.input_layer = nn.Linear(self.input_dimension, self.neurons)
+            self.hidden_layers = nn.ModuleList(
+                [
+                    nn.Linear(self.neurons, self.neurons)
+                    for _ in range(n_hidden_layers - 1)
+                ]
+            )
+            self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
         # init
         if init is not None:

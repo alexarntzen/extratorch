@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import Union, List
 from collections.abc import Callable
 
@@ -23,7 +23,10 @@ def regularization(model, p):
 
 
 def compute_loss_torch(
-    model: nn.Module, data: Union[List, Dataset], loss_func: callable
+    model: nn.Module,
+    data: Union[List, Dataset],
+    loss_func: Callable[torch.Tensor, [torch.Tensor]],
+    no_update: bool = False,
 ) -> torch.Tensor:
     """default way"""
     x_train, y_train = data[:]
@@ -136,44 +139,54 @@ def fit_module(
                 # not proportional to the length of training data
                 if track_history and not track_epoch:
                     # track training loss
-                    train_loss = compute_loss(
-                        model=model, data=data, loss_func=loss_func
-                    ).item()
-                    loss_history_train.append(train_loss)
-
-                    # track validation loss
-                    if data_val is not None and len(data_val) > 0 and track_history:
-                        validation_loss = compute_loss(
-                            model=model, data=data_val, loss_func=loss_func
+                    with torch.no_grad():
+                        train_loss = compute_loss(
+                            model=model,
+                            data=data,
+                            loss_func=loss_func,
+                            validatoin=True,
                         ).item()
-                        loss_history_val.append(validation_loss)
+                        loss_history_train.append(train_loss)
+
+                        # track validation loss
+                        if data_val is not None and len(data_val) > 0 and track_history:
+                            validation_loss = compute_loss(
+                                model=model,
+                                data=data_val,
+                                loss_func=loss_func,
+                                no_update=True,
+                            ).item()
+                            loss_history_val.append(validation_loss)
 
             if post_epoch is not None:
                 post_epoch(model=model, data=data)
 
             if track_epoch or track_history or lr_scheduler:
-                train_loss = compute_loss(
-                    model=model, data=data, loss_func=loss_func
-                ).item()
-                if track_history:
-                    # stop if nan output
-                    if np.isnan(train_loss):
-                        nan_steps += 1
-                    if epoch % 100 == 0:
-                        nan_steps = 0
+                with torch.no_grad():
+                    train_loss = compute_loss(
+                        model=model, data=data, loss_func=loss_func
+                    ).item()
+                    if track_history:
+                        # stop if nan output
+                        if np.isnan(train_loss):
+                            nan_steps += 1
+                        if epoch % 100 == 0:
+                            nan_steps = 0
+
+                    if track_epoch:
+                        loss_history_train[epoch] = train_loss
+                        if data_val is not None and len(data_val) > 0:
+                            validation_loss = compute_loss(
+                                model=model,
+                                data=data_val,
+                                loss_func=loss_func,
+                                no_update=True,
+                            ).item()
+                            loss_history_val[epoch] = validation_loss
 
                 if lr_scheduler is not None:
                     scheduler.step(train_loss)
 
-                if track_epoch:
-                    loss_history_train[epoch] = train_loss
-                    if data_val is not None and len(data_val) > 0:
-                        validation_loss = compute_loss(
-                            model=model,
-                            data=data_val,
-                            loss_func=loss_func,
-                        ).item()
-                        loss_history_val[epoch] = validation_loss
             if verbose and track_history:
                 print_iter = epoch if track_epoch else -1
                 if data_val is not None and len(data_val) > 0:
@@ -198,7 +211,7 @@ def fit_module(
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
     history = pd.DataFrame(
-        {"Validation loss": loss_history_train, "Training loss": loss_history_val}
+        {"Validation loss": loss_history_val, "Training loss": loss_history_train}
     )
     history.index.name = "Epochs" if track_epoch else "Iterations"
     return model, history

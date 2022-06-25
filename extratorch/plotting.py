@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import warnings
 from extratorch.validation import print_model_errors
-from os.path import join
+import os
 from typing import List, Union
 
 
@@ -56,7 +56,7 @@ def plot_model_history(
         axis[i].set_xlabel(history.index.name)
         axis[i].legend()
 
-    histfig.savefig(join(path_figures, f"history_{plot_name}.pdf"))
+    histfig.savefig(os.path.join(path_figures, f"history_{plot_name}.pdf"))
     plt.close(histfig)
 
 
@@ -70,23 +70,34 @@ def plot_result_sorted(
     x_axis="",
     y_axis="",
     path_figures="../figures",
-    compare_label="data",
+    compare_label="Data",
+    pred_label="Prediction",
     fig: Figure = None,
+    ax=None,
+    save=True,
+    color_pred=None,
+    color_train=None,
 ) -> Figure:
-    if fig is None:
+    if ax is not None:
+        fig = ax.get_figure()
+    elif fig is None:
         fig, ax = plt.subplots(tight_layout=True)
     else:
         ax = fig.get_axes()[0]
 
     ax.set_xlabel(x_axis)
     ax.set_ylabel(y_axis)
+
     if x_train is not None and y_train is not None:
-        ax.plot(x_train, y_train, ".:", label=compare_label, lw=2, mew=1)
+        ax.plot(
+            x_train, y_train, ".:", label=compare_label, color=color_train, lw=2, mew=1
+        )
     if x_pred is not None and y_pred is not None:
-        ax.plot(x_pred, y_pred, "-", label="Prediction", lw=2)
+        ax.plot(x_pred, y_pred, "-", label=pred_label, color=color_pred, lw=2)
     ax.legend()
-    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
-    plt.close(fig)
+    if save:
+        fig.savefig(os.path.join(path_figures, f"{plot_name}.pdf"))
+        plt.close(fig)
     return fig
 
 
@@ -120,7 +131,7 @@ def plot_model_scatter(
             lw=1,
         )
     ax.legend()
-    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
+    fig.savefig(os.path.join(path_figures, f"{plot_name}.pdf"))
     plt.close(fig)
 
 
@@ -140,7 +151,7 @@ def plot_compare_scatter(
             lw=1,
         )
     ax.legend()
-    fig.savefig(join(path_figures, f"{plot_name}.pdf"))
+    fig.savefig(os.path.join(path_figures, f"{plot_name}.pdf"))
     plt.close(fig)
 
 
@@ -152,7 +163,7 @@ def plot_model_1d(model, x_test, **kwargs):
 
 def plot_result(
     models,
-    histories: List[List[pd.DataFrame]] = None,
+    histories: List[pd.DataFrame] = None,
     path_figures="",
     plot_name="plot",
     rel_val_errors=None,
@@ -168,23 +179,27 @@ def plot_result(
     if rel_val_errors is not None:
         print_model_errors(rel_val_errors)
     if model_params is not None:
-        model_params.to_csv(join(path_figures, "model_params.csv"))
+        model_params.to_csv(os.path.join(path_figures, "model_params.csv"))
     if training_params is not None:
-        training_params.to_csv(join(path_figures, "training_params.csv"))
+        training_params.to_csv(os.path.join(path_figures, "training_params.csv"))
+    if not os.path.exists(path_figures):
+        os.makedirs(path_figures)
     for i in model_list:
+        t, c, f = training_params.loc[i][["trial", "config", "fold"]]
         if histories is not None:
             plot_model_history(
                 histories[i],
                 plot_name=f"{plot_name}_{i}",
                 path_figures=path_figures,
             )
-            for j, history in enumerate(histories[i]):
-                history.to_csv(join(path_figures, f"history_{plot_name}_{i}_{j}.csv"))
+            histories[i].to_csv(
+                os.path.join(path_figures, f"history_{plot_name}_t{t}_c{c}_f{f}.csv")
+            )
         if plot_function is not None:
-            for j in range(len(models[i])):
-                plot_function(
-                    plot_name=f"{plot_name}_{i}_{j}",
-                    model=models[i][j],
-                    path_figures=path_figures,
-                    **function_kwargs,
-                )
+            plot_function(
+                plot_name=f"_t{t}_c{c}_f{f}",
+                model=models[i],
+                path_figures=path_figures,
+                **function_kwargs,
+                **kwargs,
+            )

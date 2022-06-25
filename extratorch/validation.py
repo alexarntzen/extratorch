@@ -154,7 +154,7 @@ def _get_data_splits(folds=1, data=None, val_data=None, shuffle=True):
     if data is None:
         assert folds == 1, "will not do multiple folds no data"
     if val_data is not None and folds != 1:
-        warnings.warn("Got validation data, will not split trainig data")
+        warnings.warn("Got validation data, will not split training data")
         folds = 1
 
     if folds == 1:

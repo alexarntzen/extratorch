@@ -178,12 +178,12 @@ def plot_result(
         model_list = np.arange(len(models))
     if rel_val_errors is not None:
         print_model_errors(rel_val_errors)
+    if not os.path.exists(path_figures):
+        os.makedirs(path_figures)
     if model_params is not None:
         model_params.to_csv(os.path.join(path_figures, "model_params.csv"))
     if training_params is not None:
         training_params.to_csv(os.path.join(path_figures, "training_params.csv"))
-    if not os.path.exists(path_figures):
-        os.makedirs(path_figures)
     for i in model_list:
         t, c, f = training_params.loc[i][["trial", "config", "fold"]]
         if histories is not None:

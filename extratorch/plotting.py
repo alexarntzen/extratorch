@@ -51,7 +51,8 @@ def plot_model_history(
             else:
                 plot_func = axis[i].loglog
 
-            plot_func(x_values, y_values, label=col)
+            if len(x_values) > 0 and len(y_values) > 0:
+                plot_func(x_values, y_values, label=col)
 
         axis[i].set_xlabel(history.index.name)
         axis[i].legend()
@@ -189,7 +190,7 @@ def plot_result(
         if histories is not None:
             plot_model_history(
                 histories[i],
-                plot_name=f"{plot_name}_{i}",
+                plot_name=f"{plot_name}_t{t}_c{c}_f{f}",
                 path_figures=path_figures,
             )
             histories[i].to_csv(
@@ -197,7 +198,7 @@ def plot_result(
             )
         if plot_function is not None:
             plot_function(
-                plot_name=f"_t{t}_c{c}_f{f}",
+                plot_name=f"plot_t{t}_c{c}_f{f}",
                 model=models[i],
                 path_figures=path_figures,
                 **function_kwargs,

@@ -210,8 +210,15 @@ def fit_module(
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
-    history = pd.DataFrame(
-        {"Validation loss": loss_history_val, "Training loss": loss_history_train}
-    )
-    history.index.name = "Epochs" if track_epoch else "Iterations"
+    if track_history and data_val is not None:
+        history = pd.DataFrame(
+            {"Validation loss": loss_history_val, "Training loss": loss_history_train}
+        )
+        history.index.name = "Epochs" if track_epoch else "Iterations"
+    elif track_history:
+        history = pd.DataFrame({"Training loss": loss_history_train})
+        history.index.name = "Epochs" if track_epoch else "Iterations"
+    else:
+        history = None
+
     return model, history

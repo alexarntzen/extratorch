@@ -59,7 +59,7 @@ def k_fold_cv_grid(
     print_params: bool = False,
     get_error=None,
     copy_data: bool = False,
-):
+)->dict:
     # transform a dictionary with a list of inputs
     # into an iterator over the coproduct of the lists
     if isinstance(model_params, dict):

@@ -181,6 +181,16 @@ def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:
     """
     combine = itertools.product if product else zip
 
+    has_list_item = False
+    for value in dictionary.values():
+        if isinstance(value, (list, np.ndarray)):
+            has_list_item = True
+
+    assert has_list_item, (
+        "Iterator dictionary must have at least one list value. "
+        "Try adding [] to one of the items."
+    )
+
     for sublist in combine(*item_to_list(*dictionary.values(), cycle=not product)):
         # convert two list into dictionary
 
